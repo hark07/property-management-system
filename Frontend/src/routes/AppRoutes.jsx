@@ -12,6 +12,8 @@ import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import Profile from "../pages/Profile";
+import About from "../pages/About";
+import Contact from "../pages/Contact";
 
 const AppRoutes = () => {
   return (
@@ -23,6 +25,10 @@ const AppRoutes = () => {
           <Route path="/" element={<Home />} />
 
           <Route path="/properties" element={<Properties />} />
+
+          <Route path="/about" element={<About />} />
+
+          <Route path="/contact" element={<Contact />} />
 
           <Route path="/properties/:id" element={<PropertyDetails />} />
 
