@@ -158,6 +158,7 @@ export const getProperty = async (req, res) => {
 };
 
 // Update Property
+// Update Property
 export const updateProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
@@ -169,11 +170,15 @@ export const updateProperty = async (req, res) => {
       });
     }
 
-    // Owner can update own property, Admin can update all properties
-    if (
-      property.owner.toString() !== req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
+    console.log("PROPERTY OWNER:", property.owner.toString());
+    console.log("LOGIN USER:", req.user._id.toString());
+    console.log("USER ROLE:", req.user.role);
+
+    const isOwner = property.owner.toString() === req.user._id.toString();
+
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "Not authorized.",
@@ -189,7 +194,7 @@ export const updateProperty = async (req, res) => {
       }
     }
 
-    const updated = await Property.findByIdAndUpdate(
+    const updatedProperty = await Property.findByIdAndUpdate(
       req.params.id,
       {
         ...req.body,
@@ -198,17 +203,55 @@ export const updateProperty = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
-    );
+      },
+    ).populate("owner", "name email");
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: "Property updated successfully.",
-      property: updated,
+      property: updatedProperty,
     });
-
   } catch (error) {
     console.log("UPDATE PROPERTY ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Delete Property
+export const deleteProperty = async (req, res) => {
+  try {
+    const property = await Property.findById(req.params.id);
+
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: "Property not found.",
+      });
+    }
+
+    const isOwner = property.owner.toString() === req.user._id.toString();
+
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized.",
+      });
+    }
+
+    await property.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Property deleted successfully.",
+    });
+  } catch (error) {
+    console.log("DELETE PROPERTY ERROR:", error);
 
     res.status(500).json({
       success: false,
@@ -246,7 +289,6 @@ export const deleteProperty = async (req, res) => {
       success: true,
       message: "Property deleted successfully.",
     });
-
   } catch (error) {
     console.log("DELETE PROPERTY ERROR:", error);
 
