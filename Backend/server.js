@@ -30,12 +30,29 @@ connectDB();
 const app = express();
 
 // ==========================
+// Allowed Origins
+// ==========================
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://propertymanagementsystems.vercel.app",
+  "https://property-managementsystem.netlify.app",
+];
+
+// ==========================
 // Middleware
 // ==========================
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   }),
 );
@@ -61,7 +78,6 @@ app.use(morgan("dev"));
 app.get("/", (req, res) => {
   res.json({
     success: true,
-
     message: "Property Rental Management API Running",
   });
 });
@@ -71,23 +87,14 @@ app.get("/", (req, res) => {
 // ==========================
 
 app.use("/api/auth", authRoutes);
-
 app.use("/api/properties", propertyRoutes);
-
 app.use("/api/tenants", tenantRoutes);
-
 app.use("/api/maintenance", maintenanceRoutes);
-
 app.use("/api/amenities", amenityRoutes);
-
 app.use("/api/bookings", bookingRoutes);
-
 app.use("/api/dashboard", dashboardRoutes);
-
 app.use("/api/profile", profileRoutes);
-
 app.use("/api/notifications", notificationRoutes);
-
 app.use("/api/users", userRoutes);
 
 // ==========================
@@ -97,7 +104,6 @@ app.use("/api/users", userRoutes);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-
     message: "Route not found.",
   });
 });
@@ -111,7 +117,6 @@ app.use((err, req, res, next) => {
 
   res.status(err.status || 500).json({
     success: false,
-
     message: err.message || "Internal Server Error",
   });
 });
@@ -128,12 +133,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://propertymanagementsystems.vercel.app",
-      "https://property-managementsystem.netlify.app",
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
@@ -156,5 +156,5 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
