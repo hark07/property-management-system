@@ -165,15 +165,17 @@ export const updateProperty = async (req, res) => {
     if (!property) {
       return res.status(404).json({
         success: false,
-
         message: "Property not found.",
       });
     }
 
-    if (property.owner.toString() !== req.user._id.toString()) {
+    // Owner can update own property, Admin can update all properties
+    if (
+      property.owner.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-
         message: "Not authorized.",
       });
     }
@@ -183,40 +185,33 @@ export const updateProperty = async (req, res) => {
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const imageUrl = await uploadToCloudinary(file);
-
         images.push(imageUrl);
       }
     }
 
     const updated = await Property.findByIdAndUpdate(
       req.params.id,
-
       {
         ...req.body,
-
         images,
       },
-
       {
         new: true,
-
         runValidators: true,
-      },
+      }
     );
 
     res.json({
       success: true,
-
       message: "Property updated successfully.",
-
       property: updated,
     });
+
   } catch (error) {
     console.log("UPDATE PROPERTY ERROR:", error);
 
     res.status(500).json({
       success: false,
-
       message: error.message,
     });
   }
@@ -230,15 +225,17 @@ export const deleteProperty = async (req, res) => {
     if (!property) {
       return res.status(404).json({
         success: false,
-
         message: "Property not found.",
       });
     }
 
-    if (property.owner.toString() !== req.user._id.toString()) {
+    // Owner can delete own property, Admin can delete all properties
+    if (
+      property.owner.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-
         message: "Not authorized.",
       });
     }
@@ -247,13 +244,14 @@ export const deleteProperty = async (req, res) => {
 
     res.json({
       success: true,
-
       message: "Property deleted successfully.",
     });
+
   } catch (error) {
+    console.log("DELETE PROPERTY ERROR:", error);
+
     res.status(500).json({
       success: false,
-
       message: error.message,
     });
   }
